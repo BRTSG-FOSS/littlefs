@@ -12,3 +12,10 @@ test.c
 tests/*.toml.*
 scripts/__pycache__
 .gdb_history
+littlefs_test.cpp
+littlefs_test.sln
+littlefs_test.vcxproj
+littlefs_test.vcxproj.filters
+.vs
+x64
+littlefs_test.c
