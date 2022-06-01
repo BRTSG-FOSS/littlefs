@@ -19,3 +19,4 @@ littlefs_test.vcxproj.filters
 .vs
 x64
 littlefs_test.c
+vstest/littlefs_testb.c
