@@ -246,38 +246,44 @@ int main()
 
         const char *names[FILES] = { "aegus", "galemus", "kaemon", "phyxon", "sekovix" };
         lfs_file_t files[FILES];
+        lfs_block_t blocks[FILES];
 
         lfs_format(&lfs, &cfg);
         lfs_mount(&lfs, &cfg);
 
-        // check if small allocations are as expected
+        // check if small allocations behave as expected
 
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
         lfs_file_reserve(&lfs, &files[0], cfg.block_size - 1, 0);
+        lfs_file_reserved(&lfs, &files[0], &blocks[0]);
         lfs_file_close(&lfs, &files[0]);
 
         lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
         lfs_file_reserve(&lfs, &files[1], cfg.block_size, 0);
-        assert(lfs_file_reserved_block(&lfs, &files[1]) == lfs_file_reserved_block(&lfs, &files[0]) + 1
-            || lfs_file_reserved_block(&lfs, &files[1]) < lfs_file_reserved_block(&lfs, &files[0]));
+        lfs_file_reserved(&lfs, &files[1], &blocks[1]);
+        assert(blocks[1] == blocks[0] + 1
+            || blocks[1] < blocks[0]);
         lfs_file_close(&lfs, &files[1]);
 
         lfs_file_open(&lfs, &files[2], names[2], LFS_O_WRONLY | LFS_O_CREAT);
         lfs_file_reserve(&lfs, &files[2], cfg.block_size + 1, 0);
-        assert(lfs_file_reserved_block(&lfs, &files[2]) == lfs_file_reserved_block(&lfs, &files[1]) + 1
-            || lfs_file_reserved_block(&lfs, &files[2]) < lfs_file_reserved_block(&lfs, &files[1]));
+        lfs_file_reserved(&lfs, &files[2], &blocks[2]);
+        assert(blocks[2] == blocks[1] + 1
+            || blocks[2] < blocks[1]);
         lfs_file_close(&lfs, &files[2]);
 
         lfs_file_open(&lfs, &files[3], names[3], LFS_O_WRONLY | LFS_O_CREAT);
         lfs_file_reserve(&lfs, &files[3], cfg.block_size * 2 + 1, 0);
-        assert(lfs_file_reserved_block(&lfs, &files[3]) == lfs_file_reserved_block(&lfs, &files[2]) + 2
-            || lfs_file_reserved_block(&lfs, &files[3]) < lfs_file_reserved_block(&lfs, &files[2]));
+        lfs_file_reserved(&lfs, &files[3], &blocks[3]);
+        assert(blocks[3] == blocks[2] + 2
+            || blocks[3] < blocks[2]);
         lfs_file_close(&lfs, &files[3]);
 
         lfs_file_open(&lfs, &files[4], names[4], LFS_O_WRONLY | LFS_O_CREAT);
         lfs_file_reserve(&lfs, &files[4], cfg.block_size, 0);
-        assert(lfs_file_reserved_block(&lfs, &files[4]) == lfs_file_reserved_block(&lfs, &files[3]) + 3
-            || lfs_file_reserved_block(&lfs, &files[4]) < lfs_file_reserved_block(&lfs, &files[3]));
+        lfs_file_reserved(&lfs, &files[4], &blocks[4]);
+        assert(blocks[4] == blocks[3] + 3
+            || blocks[4] < blocks[3]);
         lfs_file_close(&lfs, &files[4]);
 
         lfs_unmount(&lfs);
