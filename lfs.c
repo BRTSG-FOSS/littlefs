@@ -3712,7 +3712,15 @@ static int lfs_file_rawtruncate(lfs_t *lfs, lfs_file_t *file, lfs_off_t size) {
     if (file->flags & LFS_F_FLAT) {
         LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
         LFS_ASSERT(false);
-        if (size == oldsize) {
+        if (size == 0) {
+            // just empty the file
+            file->ctz.head = 0;
+            file->ctz.size = 0;
+            file->flags &= ~LFS_F_FLAT;
+            file->flags |= LFS_F_INLINE | LFS_F_DIRTY;
+            lfs_alloc_ack(lfs);
+            return 0;
+        } else if (size == oldsize) {
             // noop
             return 0;
         } else {
@@ -3801,6 +3809,7 @@ static int lfs_file_rawreserve(lfs_t *lfs, lfs_file_t *file, lfs_size_t size, in
         if (flags & LFS_R_ERRED) {
             file->flags |= LFS_F_ERRED;
         }
+        lfs_alloc_ack(lfs);
         return LFS_ERR_OK;
     }
 
