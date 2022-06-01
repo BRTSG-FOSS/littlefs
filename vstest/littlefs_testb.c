@@ -253,27 +253,31 @@ int main()
         // check if small allocations are as expected
 
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
-        lfs_file_reserve(&lfs, &files[0], cfg.block_size - 1);
+        lfs_file_reserve(&lfs, &files[0], cfg.block_size - 1, 0);
         lfs_file_close(&lfs, &files[0]);
 
         lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
-        lfs_file_reserve(&lfs, &files[1], cfg.block_size);
-        assert(files[1].block == files[0].block + 1 || files[1].block < files[0].block + 1);
+        lfs_file_reserve(&lfs, &files[1], cfg.block_size, 0);
+        assert(lfs_file_reserved_block(&lfs, &files[1]) == lfs_file_reserved_block(&lfs, &files[0]) + 1
+            || lfs_file_reserved_block(&lfs, &files[1]) < lfs_file_reserved_block(&lfs, &files[0]));
         lfs_file_close(&lfs, &files[1]);
 
         lfs_file_open(&lfs, &files[2], names[2], LFS_O_WRONLY | LFS_O_CREAT);
-        lfs_file_reserve(&lfs, &files[2], cfg.block_size + 1);
-        assert(files[2].block == files[1].block + 1 || files[2].block < files[1].block + 1);
+        lfs_file_reserve(&lfs, &files[2], cfg.block_size + 1, 0);
+        assert(lfs_file_reserved_block(&lfs, &files[2]) == lfs_file_reserved_block(&lfs, &files[1]) + 1
+            || lfs_file_reserved_block(&lfs, &files[2]) < lfs_file_reserved_block(&lfs, &files[1]));
         lfs_file_close(&lfs, &files[2]);
 
         lfs_file_open(&lfs, &files[3], names[3], LFS_O_WRONLY | LFS_O_CREAT);
-        lfs_file_reserve(&lfs, &files[3], cfg.block_size * 2 + 1);
-        assert(files[3].block == files[2].block + 2 || files[3].block < files[2].block + 1);
+        lfs_file_reserve(&lfs, &files[3], cfg.block_size * 2 + 1, 0);
+        assert(lfs_file_reserved_block(&lfs, &files[3]) == lfs_file_reserved_block(&lfs, &files[2]) + 2
+            || lfs_file_reserved_block(&lfs, &files[3]) < lfs_file_reserved_block(&lfs, &files[2]));
         lfs_file_close(&lfs, &files[3]);
 
         lfs_file_open(&lfs, &files[4], names[4], LFS_O_WRONLY | LFS_O_CREAT);
-        lfs_file_reserve(&lfs, &files[4], cfg.block_size);
-        assert(files[4].block == files[3].block + 3 || files[4].block < files[3].block + 1);
+        lfs_file_reserve(&lfs, &files[4], cfg.block_size, 0);
+        assert(lfs_file_reserved_block(&lfs, &files[4]) == lfs_file_reserved_block(&lfs, &files[3]) + 3
+            || lfs_file_reserved_block(&lfs, &files[4]) < lfs_file_reserved_block(&lfs, &files[3]));
         lfs_file_close(&lfs, &files[4]);
 
         lfs_unmount(&lfs);
@@ -312,7 +316,7 @@ int main()
 
                     lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
                     lfs_ssize_t bold = lfs_file_size(&lfs, &files[n]) / cfg.block_size;
-                    int err = lfs_file_reserve(&lfs, &files[n], cfg.block_size * bnew);
+                    int err = lfs_file_reserve(&lfs, &files[n], cfg.block_size * bnew, 0);
                     if (expectfail) assert(err == LFS_ERR_NOSPC);
                     lfs_file_close(&lfs, &files[n]);
 
@@ -324,7 +328,7 @@ int main()
                         // if no space but there should be the remaining space is fragmented, free some space
                         lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
                         assert(lfs_file_size(&lfs, &files[n]) / cfg.block_size == bold);
-                        lfs_file_reserve(&lfs, &files[n], 0);
+                        lfs_file_reserve(&lfs, &files[n], 0, 0);
                         lfs_file_close(&lfs, &files[n]);
                         nblocks -= bold;
                     }
@@ -360,13 +364,13 @@ int main()
             lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
         }
         for (int n = 0; n < FILES; n++) {
-            int err = lfs_file_reserve(&lfs, &files[n], nblocks * cfg.block_size);
+            int err = lfs_file_reserve(&lfs, &files[n], nblocks * cfg.block_size, 0);
             assert(!err);
         }
 
         assert(lfs_fs_size(&lfs) >= nblocks * FILES);
         lfs_file_open(&lfs, &file, "test", LFS_O_WRONLY | LFS_O_CREAT);
-        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size);
+        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size, 0);
         assert(err == LFS_ERR_NOSPC); // there should be no space now
         lfs_file_close(&lfs, &file);
 
@@ -376,9 +380,107 @@ int main()
 
         assert(lfs_fs_size(&lfs) >= nblocks * FILES);
         lfs_file_open(&lfs, &file, "test", LFS_O_WRONLY | LFS_O_CREAT);
-        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size);
+        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size, 0);
         assert(err == LFS_ERR_NOSPC); // there should be no space now
         lfs_file_close(&lfs, &file);
+
+        lfs_unmount(&lfs);
+
+        lfs_rambd_destroy(&cfg);
+    }
+
+    // test 4 (repeated reservations)
+
+    {
+        lfs_rambd_create(&cfg);
+
+        const char *names[FILES] = { "koizun", "nenxing", "qailo", "shengwo", "yinpiang" };
+        lfs_file_t files[FILES];
+        int err;
+
+        lfs_format(&lfs, &cfg);
+        lfs_mount(&lfs, &cfg);
+
+        lfs_ssize_t szhalf = (cfg.block_count - 8) / 2;
+        assert(szhalf > 0);
+        lfs_ssize_t szeighth = (cfg.block_count - 8) / 8;
+        assert(szeighth > 0);
+
+        // big half file can definitely be allocated now
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(!err);
+        lfs_file_close(&lfs, &files[0]);
+
+        // one eight definitely as well
+        lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[1], cfg.block_size * szeighth, 0);
+        assert(!err);
+        lfs_file_close(&lfs, &files[1]);
+
+        // free one half
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], 0, 0);
+        assert(!err);
+        // attempting to reserve again should fail since this space is still committed
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(err == LFS_ERR_NOSPC);
+        lfs_file_close(&lfs, &files[0]);
+
+        // allocate one half twice
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(!err); // must succeed because the free was committed
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(!err); // must still succeed because we discarded the previous
+        lfs_file_close(&lfs, &files[0]);
+
+        // overallocate
+        lfs_file_open(&lfs, &files[2], names[2], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[2], cfg.block_size * szhalf, 0);
+        assert(err == LFS_ERR_NOSPC); // this should fail
+        lfs_file_close(&lfs, &files[2]);
+
+        // free one eighth
+        lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[1], 0, 0);
+        assert(!err);
+        lfs_file_close(&lfs, &files[1]);
+
+        // allocate one eighth
+        lfs_file_open(&lfs, &files[3], names[3], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[3], cfg.block_size * szeighth, 0);
+        assert(!err); // we should have the space since we just freed it
+        lfs_file_close(&lfs, &files[3]);
+
+        // allocate again after uncommitted free
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], 0, 0);
+        assert(!err);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(err == LFS_ERR_NOSPC); // must fail because we did not commit the free
+        lfs_file_close(&lfs, &files[0]);
+
+        // the last free should have been committed now, test flags
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(!err); // we should have the space
+        // flag error
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, LFS_R_ERRED);
+        assert(!err); // this should not give any error
+        lfs_file_close(&lfs, &files[0]);
+
+        // the error flag should cause the last commit not to be applied
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(!err); // we should have the space
+        lfs_file_close(&lfs, &files[0]);
+
+        // reserve again the same file
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(err == LFS_ERR_NOSPC); // this should fail since the space is still committed
+        lfs_file_close(&lfs, &files[0]);
 
         lfs_unmount(&lfs);
 
