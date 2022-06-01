@@ -1427,6 +1427,7 @@ static int lfs_dir_getinfo(lfs_t *lfs, lfs_mdir_t *dir,
 
     if (lfs_tag_type3(tag) == LFS_TYPE_CTZSTRUCT
          || lfs_tag_type3(tag) == LFS_TYPE_FLATSTRUCT) {
+        LFS_ASSERT(lfs_tag_type3(tag) != LFS_TYPE_FLATSTRUCT);
         info->size = ctz.size;
     } else if (lfs_tag_type3(tag) == LFS_TYPE_INLINESTRUCT) {
         info->size = lfs_tag_size(tag);
@@ -3133,6 +3134,7 @@ static int lfs_file_rawopencfg(lfs_t *lfs, lfs_file_t *file,
     } else if (lfs_tag_type3(tag) == LFS_TYPE_FLATSTRUCT) {
         // mark this as a flat file
         LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+        LFS_ASSERT(false);
         file->flags |= LFS_F_FLAT;
     }
 
@@ -3273,6 +3275,7 @@ static int lfs_file_flush(lfs_t *lfs, lfs_file_t *file) {
         if (file->flags & LFS_F_FLAT) {
             // flat file access not yet implemented
             LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+            LFS_ASSERT(false);
             return LFS_ERR_INVAL;
         }
 
@@ -3368,6 +3371,7 @@ static int lfs_file_rawsync(lfs_t *lfs, lfs_file_t *file) {
         if (file->flags & LFS_F_FLAT) {
             // update the flat file reference
             LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+            LFS_ASSERT(false);
             type = LFS_TYPE_FLATSTRUCT;
             ctz = file->ctz;
             lfs_ctz_tole32(&ctz);
@@ -3426,6 +3430,7 @@ static lfs_ssize_t lfs_file_flushedread(lfs_t *lfs, lfs_file_t *file,
             if (file->flags & LFS_F_FLAT) {
                 // reading flat files is not yet implemented
                 LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+                LFS_ASSERT(false);
                 return LFS_ERR_INVAL;
             } 
             if (!(file->flags & LFS_F_INLINE)) {
@@ -3657,6 +3662,7 @@ static lfs_soff_t lfs_file_rawseek(lfs_t *lfs, lfs_file_t *file,
     if (file->flags & LFS_F_FLAT) {
         // seeking flat files is not yet implemented
         LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+        LFS_ASSERT(false);
         return LFS_ERR_INVAL;
     } 
 
@@ -3705,6 +3711,7 @@ static int lfs_file_rawtruncate(lfs_t *lfs, lfs_file_t *file, lfs_off_t size) {
 
     if (file->flags & LFS_F_FLAT) {
         LFS_ASSERT((file->flags & LFS_F_INLINE) == 0);
+        LFS_ASSERT(false);
         if (size == oldsize) {
             // noop
             return 0;
@@ -4585,6 +4592,7 @@ int lfs_fs_rawtraverse(lfs_t *lfs,
                     return err;
                 }
             } else if (lfs_tag_type3(tag) == LFS_TYPE_FLATSTRUCT) {
+                LFS_ASSERT(false);
                 if (ctz.size) {
                     lfs_size_t nblocks = ((ctz.size - 1) / lfs->cfg->block_size) + 1;
                     lfs_block_t bend = ctz.head + nblocks;
@@ -4616,6 +4624,7 @@ int lfs_fs_rawtraverse(lfs_t *lfs,
         }
 
         if (f->flags & LFS_F_FLAT) {
+            LFS_ASSERT(false);
             if (f->flags & LFS_F_DIRTY) {
                 if (f->ctz.size) {
                     lfs_size_t nblocks = ((f->ctz.size - 1) / lfs->cfg->block_size) + 1;
