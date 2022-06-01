@@ -317,8 +317,8 @@ int main()
                 {
                     ++nover;
                     lfs_ssize_t bnew = WANG_HASH(r * ROUNDS * FILES + c * FILES  + n) % (cfg.block_count / FILES);
-                    bool expectok = nblocks + nover + bnew <= cfg.block_count;
-                    bool expectfail = nblocks + bnew > cfg.block_count;
+                    bool expectok = nblocks + nover + bnew <= (lfs_ssize_t)cfg.block_count;
+                    bool expectfail = nblocks + bnew > (lfs_ssize_t)cfg.block_count;
 
                     lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
                     lfs_ssize_t bold = lfs_file_size(&lfs, &files[n]) / cfg.block_size;
@@ -364,7 +364,7 @@ int main()
         assert(nblocks > 0);
         lfs_ssize_t nbtest = cfg.block_count - (nblocks * FILES) + 1;
         assert(nbtest > 0);
-        assert((nblocks *FILES) + nbtest > cfg.block_count);
+        assert((nblocks * FILES) + nbtest > (lfs_ssize_t)cfg.block_count);
 
         for (int n = 0; n < FILES; n++) {
             lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
@@ -486,6 +486,29 @@ int main()
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
         err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
         assert(err == LFS_ERR_NOSPC); // this should fail since the space is still committed
+        lfs_file_close(&lfs, &files[0]);
+
+        // truncate
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_truncate(&lfs, &files[0], cfg.block_size * szeighth);
+        assert(!err);
+        lfs_file_close(&lfs, &files[0]);
+
+        // allocate two eighth
+        lfs_file_open(&lfs, &files[4], names[4], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[4], cfg.block_size * szeighth * 2, 0);
+        assert(!err); // we should have the space since we just freed it
+        lfs_file_close(&lfs, &files[4]);
+
+        // allocate one eighth, dont check
+        lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[1], cfg.block_size * szeighth, 0);
+        lfs_file_close(&lfs, &files[1]);
+
+        // attempt to grow should definitely fail
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_truncate(&lfs, &files[0], cfg.block_size * szhalf);
+        assert(err == LFS_ERR_NOSPC);
         lfs_file_close(&lfs, &files[0]);
 
         lfs_unmount(&lfs);
