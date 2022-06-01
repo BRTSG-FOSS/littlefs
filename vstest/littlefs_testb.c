@@ -316,7 +316,7 @@ int main()
                 for (int n = 0; n < FILES; ++n)
                 {
                     ++nover;
-                    lfs_ssize_t bnew = WANG_HASH(r * ROUNDS * FILES + c * FILES  + n) % (cfg.block_count / FILES);
+                    lfs_ssize_t bnew = WANG_HASH(r * CYCLES * FILES + c * FILES  + n) % (cfg.block_count / FILES);
                     bool expectok = nblocks + nover + bnew <= (lfs_ssize_t)cfg.block_count;
                     bool expectfail = nblocks + bnew > (lfs_ssize_t)cfg.block_count;
 
@@ -504,6 +504,11 @@ int main()
         lfs_file_open(&lfs, &files[1], names[1], LFS_O_WRONLY | LFS_O_CREAT);
         err = lfs_file_reserve(&lfs, &files[1], cfg.block_size * szeighth, 0);
         lfs_file_close(&lfs, &files[1]);
+
+        // allocate one eighth, dont check
+        lfs_file_open(&lfs, &files[2], names[2], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &files[2], cfg.block_size * szeighth, 0);
+        lfs_file_close(&lfs, &files[2]);
 
         // attempt to grow should definitely fail
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
