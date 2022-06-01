@@ -344,26 +344,39 @@ int main()
 
         const char *names[FILES] = { "borea", "miani", "nistia", "rosilio", "stalli" };
         lfs_file_t files[FILES];
+        lfs_file_t file;
+        int err;
 
         lfs_format(&lfs, &cfg);
         lfs_mount(&lfs, &cfg);
 
-        lfs_ssize_t nblocks = (cfg.block_count - 2 - FILES - 1) / FILES;
+        lfs_ssize_t nblocks = (cfg.block_count - 2 - FILES - 1) / (FILES + 1);
+        assert(nblocks > 0);
         lfs_ssize_t nbtest = cfg.block_count - (nblocks * FILES) + 1;
+        assert(nbtest > 0);
+        assert((nblocks *FILES) + nbtest > cfg.block_count);
 
         for (int n = 0; n < FILES; n++) {
             lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
         }
         for (int n = 0; n < FILES; n++) {
-            lfs_file_reserve(&lfs, &files[n], nblocks);
+            int err = lfs_file_reserve(&lfs, &files[n], nblocks * cfg.block_size);
+            assert(!err);
         }
+
+        assert(lfs_fs_size(&lfs) >= nblocks * FILES);
+        lfs_file_open(&lfs, &file, "test", LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size);
+        assert(err == LFS_ERR_NOSPC); // there should be no space now
+        lfs_file_close(&lfs, &file);
+
         for (int n = 0; n < FILES; n++) {
             lfs_file_close(&lfs, &files[n]);
         }
 
-        lfs_file_t file;
+        assert(lfs_fs_size(&lfs) >= nblocks * FILES);
         lfs_file_open(&lfs, &file, "test", LFS_O_WRONLY | LFS_O_CREAT);
-        int err = lfs_file_reserve(&lfs, &file, nbtest);
+        err = lfs_file_reserve(&lfs, &file, nbtest * cfg.block_size);
         assert(err == LFS_ERR_NOSPC); // there should be no space now
         lfs_file_close(&lfs, &file);
 
