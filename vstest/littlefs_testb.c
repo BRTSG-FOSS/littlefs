@@ -494,6 +494,14 @@ int main()
         assert(err == LFS_ERR_OK);
         lfs_file_close(&lfs, &files[0]);
 
+        // grow and shrink
+        lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
+        err = lfs_file_truncate(&lfs, &files[0], cfg.block_size * szhalf);
+        assert(err == LFS_ERR_OK);
+        err = lfs_file_truncate(&lfs, &files[0], cfg.block_size * szeighth);
+        assert(err == LFS_ERR_OK);
+        lfs_file_close(&lfs, &files[0]);
+
         // allocate two eighth
         lfs_file_open(&lfs, &files[4], names[4], LFS_O_WRONLY | LFS_O_CREAT);
         err = lfs_file_reserve(&lfs, &files[4], cfg.block_size * szeighth * 2, 0);
