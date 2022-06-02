@@ -331,12 +331,16 @@ int main()
                         nblocks += bnew;
                     } else if (expectok) {
                         assert(err == LFS_ERR_NOSPC);
-                        // if no space but there should be the remaining space is fragmented, free some space
+                        // if no space but there should be the remaining space is fragmented
                         lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
                         assert(lfs_file_size(&lfs, &files[n]) / cfg.block_size == bold);
-                        lfs_file_reserve(&lfs, &files[n], 0, 0);
+                        err = lfs_file_reserve(&lfs, &files[n], 1, 0);
+                        assert(err == LFS_ERR_OK); // we should be able to reserve at least one block
                         lfs_file_close(&lfs, &files[n]);
-                        nblocks -= bold;
+                        if (!err) {
+                            nblocks -= bold;
+                            nblocks += 1;
+                        }
                     }
                 }
             }
