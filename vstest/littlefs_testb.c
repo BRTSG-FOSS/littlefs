@@ -235,7 +235,7 @@ const struct lfs_config cfg = {
 
 #define FILES 5
 #define CYCLES 64
-#define ROUNDS 4
+#define ROUNDS 8
 
 int main()
 {
@@ -320,9 +320,17 @@ int main()
                     bool expectok = nblocks + nover + bnew <= (lfs_ssize_t)cfg.block_count;
                     bool expectfail = nblocks + bnew > (lfs_ssize_t)cfg.block_count;
 
+                    // put some random flags
+                    int flags = WANG_HASH(bnew) & 1 ? LFS_R_COPY : 0;
+                    if (expectok && (WANG_HASH(bnew * 2) & 1)) flags |= LFS_R_OVERWRITE;
+                    if (expectok && (WANG_HASH(bnew * 3) & 1)) flags |= LFS_R_TRUNCATE;
+                    if (WANG_HASH(bnew * 4) & 1) flags |= LFS_R_FRONT;
+                    if (WANG_HASH(bnew * 5) & 1) flags |= LFS_R_GOBBLE;
+                    if (WANG_HASH(bnew * 6) & 1) flags = 0;
+
                     lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
                     lfs_ssize_t bold = lfs_file_size(&lfs, &files[n]) / cfg.block_size;
-                    int err = lfs_file_reserve(&lfs, &files[n], cfg.block_size * bnew, 0);
+                    int err = lfs_file_reserve(&lfs, &files[n], cfg.block_size * bnew, flags);
                     if (expectfail) assert(err == LFS_ERR_NOSPC);
                     lfs_file_close(&lfs, &files[n]);
 
