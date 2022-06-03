@@ -206,7 +206,7 @@ lfs_rambd_t bd;
 #define LFS_BLOCK_COUNT 1023
 #define LFS_BLOCK_CYCLES -1
 #define LFS_CACHE_SIZE (64 % LFS_PROG_SIZE == 0 ? 64 : LFS_PROG_SIZE)
-#define LFS_LOOKAHEAD_SIZE 16
+#define LFS_LOOKAHEAD_SIZE 256
 #define LFS_ERASE_VALUE 0xff
 #define LFS_ERASE_CYCLES 0
 #define LFS_BADBLOCK_BEHAVIOR LFS_TESTBD_BADBLOCK_PROGERROR
@@ -234,8 +234,8 @@ const struct lfs_config cfg = {
 };
 
 #define FILES 5
-#define CYCLES 64
-#define ROUNDS 8
+#define CYCLES 256
+#define ROUNDS 256
 
 int main()
 {
@@ -329,7 +329,9 @@ int main()
                     if (WANG_HASH(bnew * 6) & 1) flags = 0;
 
                     lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
-                    lfs_ssize_t bold = lfs_file_size(&lfs, &files[n]) / cfg.block_size;
+                    lfs_ssize_t szold = lfs_file_size(&lfs, &files[n]);
+                    lfs_ssize_t bold = szold ? ((szold - 1) / cfg.block_size) + 1 : 0;
+                    assert(bold == szold / cfg.block_size);
                     int err = lfs_file_reserve(&lfs, &files[n], cfg.block_size * bnew, flags);
                     if (expectfail) assert(err == LFS_ERR_NOSPC);
                     lfs_file_close(&lfs, &files[n]);
@@ -339,10 +341,11 @@ int main()
                         nblocks += bnew;
                     } else if (expectok) {
                         assert(err == LFS_ERR_NOSPC);
+                        printf("fail\n");
                         // if no space but there should be the remaining space is fragmented
                         lfs_file_open(&lfs, &files[n], names[n], LFS_O_WRONLY | LFS_O_CREAT);
-                        assert(lfs_file_size(&lfs, &files[n]) / cfg.block_size == bold);
-                        err = lfs_file_reserve(&lfs, &files[n], 1, 0);
+                        assert(lfs_file_size(&lfs, &files[n]) == szold);
+                        err = lfs_file_reserve(&lfs, &files[n], cfg.block_size, flags);
                         assert(err == LFS_ERR_OK); // we should be able to reserve at least one block
                         lfs_file_close(&lfs, &files[n]);
                         if (!err) {
@@ -350,6 +353,8 @@ int main()
                             nblocks += 1;
                         }
                     }
+
+                    printf("%i\n", nblocks);
                 }
             }
 
