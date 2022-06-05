@@ -1,7 +1,7 @@
 
-#include "lfs.h"
+#if 1
 
-#if 0
+#include "lfs.h"
 
 // variables used by the filesystem
 lfs_t lfs;
@@ -40,6 +40,7 @@ int user_provided_block_device_prog(const struct lfs_config *c, lfs_block_t bloc
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
 int user_provided_block_device_erase(const struct lfs_config *c, lfs_block_t block)
 {
+    printf("ERASE ERASE ERASE block %i\n", block);
     return 0;
 }
 
@@ -47,6 +48,7 @@ int user_provided_block_device_erase(const struct lfs_config *c, lfs_block_t blo
 // are propagated to the user.
 int user_provided_block_device_sync(const struct lfs_config *c)
 {
+    printf("==================================== sync ====================================\n");
     return 0;
 }
 
@@ -133,8 +135,9 @@ lfs_block_t tryreserve(char *filename, uint32_t size)
     printf("open reserve file\n");
     lfs_file_open(&lfs, &file, filename, LFS_O_WRONLY | LFS_O_CREAT);
     printf("reserve bytes\n");
-    lfs_file_reserve(&lfs, &file, size);
-    lfs_block_t res = file.block;
+    lfs_file_reserve(&lfs, &file, size, 0);
+    lfs_block_t res;
+    lfs_file_reserved(&lfs, &file, &res);
     printf("close reserve file\n");
     lfs_file_close(&lfs, &file);
     return res;
@@ -144,7 +147,8 @@ lfs_block_t tryopenexisting(char *filename)
 {
     printf("open read reserve file\n");
     lfs_file_open(&lfs, &file, filename, LFS_O_RDONLY | LFS_O_CREAT);
-    lfs_block_t res = file.block;
+    lfs_block_t res;
+    lfs_file_reserved(&lfs, &file, &res);
     printf("close read reserve file\n");
     lfs_file_close(&lfs, &file);
     return res;
@@ -192,7 +196,7 @@ int main(void)
     lfs_unmount(&lfs);
 }
 
-#endif
+#else
 
 #include "lfs.h"
 #include "bd/lfs_rambd.h"
@@ -546,3 +550,5 @@ int main()
         lfs_rambd_destroy(&cfg);
     }
 }
+
+#endif
