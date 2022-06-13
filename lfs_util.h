@@ -8,6 +8,12 @@
 #ifndef LFS_UTIL_H
 #define LFS_UTIL_H
 
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#endif
+
 // Users can override lfs_util.h with their own configuration by defining
 // LFS_CONFIG as a header file to include (-DLFS_CONFIG=lfs_config.h).
 //
@@ -52,9 +58,15 @@ extern "C"
 // Logging functions
 #ifndef LFS_TRACE
 #ifdef LFS_YES_TRACE
+#ifdef _MSC_VER
+#define LFS_TRACE_(fmt, ...) \
+    printf("%s:%d:trace: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_TRACE(fmt, ...) LFS_TRACE_(fmt, ##__VA_ARGS__)
+#else
 #define LFS_TRACE_(fmt, ...) \
     printf("%s:%d:trace: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
+#endif
 #else
 #define LFS_TRACE(...)
 #endif
@@ -62,9 +74,15 @@ extern "C"
 
 #ifndef LFS_DEBUG
 #ifndef LFS_NO_DEBUG
+#ifdef _MSC_VER
+#define LFS_DEBUG_(fmt, ...) \
+    printf("%s:%d:debug: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_DEBUG(fmt, ...) LFS_DEBUG_(fmt, ##__VA_ARGS__)
+#else
 #define LFS_DEBUG_(fmt, ...) \
     printf("%s:%d:debug: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
+#endif
 #else
 #define LFS_DEBUG(...)
 #endif
@@ -72,9 +90,15 @@ extern "C"
 
 #ifndef LFS_WARN
 #ifndef LFS_NO_WARN
+#ifdef _MSC_VER
+#define LFS_WARN_(fmt, ...) \
+    printf("%s:%d:warn: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_WARN(fmt, ...) LFS_WARN_(fmt, ##__VA_ARGS__)
+#else
 #define LFS_WARN_(fmt, ...) \
     printf("%s:%d:warn: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
+#endif
 #else
 #define LFS_WARN(...)
 #endif
@@ -82,9 +106,15 @@ extern "C"
 
 #ifndef LFS_ERROR
 #ifndef LFS_NO_ERROR
+#ifdef _MSC_VER
+#define LFS_ERROR_(fmt, ...) \
+    printf("%s:%d:error: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_ERROR(fmt, ...) LFS_ERROR_(fmt, ##__VA_ARGS__)
+#else
 #define LFS_ERROR_(fmt, ...) \
     printf("%s:%d:error: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
+#endif
 #else
 #define LFS_ERROR(...)
 #endif
@@ -239,6 +269,10 @@ static inline void lfs_free(void *p) {
 
 #ifdef __cplusplus
 } /* extern "C" */
+#endif
+
+#ifdef _MSC_VER
+#pragma warning (pop)
 #endif
 
 #endif

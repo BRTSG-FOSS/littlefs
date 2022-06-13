@@ -8,6 +8,10 @@
 #include "lfs.h"
 #include "lfs_util.h"
 
+#ifdef _MSC_VER
+#pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#endif
 
 // some constants used throughout the code
 #define LFS_BLOCK_NULL ((lfs_block_t)-1)
