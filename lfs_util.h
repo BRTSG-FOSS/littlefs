@@ -58,7 +58,7 @@ extern "C"
 #ifndef LFS_TRACE
 #ifdef LFS_YES_TRACE
 #define LFS_TRACE_(fmt, ...) \
-    printf("%s:%d:trace: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    printf("%s:%d:trace: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #define LFS_TRACE(fmt, ...) LFS_TRACE_(fmt, ##__VA_ARGS__, "")
 #else
 #define LFS_TRACE(...)
@@ -68,8 +68,8 @@ extern "C"
 #ifndef LFS_DEBUG
 #ifndef LFS_NO_DEBUG
 #define LFS_DEBUG_(fmt, ...) \
-    printf("%s:%d:debug: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
-#define LFS_DEBUG(fmt, ...) LFS_DEBUG_(fmt, ##__VA_ARGS__, "")
+    printf("%s:%d:debug: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_DEBUG(fmt, ...) LFS_DEBUG_(fmt, ##__VA_ARGS__)
 #else
 #define LFS_DEBUG(...)
 #endif
@@ -78,8 +78,8 @@ extern "C"
 #ifndef LFS_WARN
 #ifndef LFS_NO_WARN
 #define LFS_WARN_(fmt, ...) \
-    printf("%s:%d:warn: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
-#define LFS_WARN(fmt, ...) LFS_WARN_(fmt, ##__VA_ARGS__, "")
+    printf("%s:%d:warn: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_WARN(fmt, ...) LFS_WARN_(fmt, ##__VA_ARGS__)
 #else
 #define LFS_WARN(...)
 #endif
@@ -88,8 +88,8 @@ extern "C"
 #ifndef LFS_ERROR
 #ifndef LFS_NO_ERROR
 #define LFS_ERROR_(fmt, ...) \
-    printf("%s:%d:error: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
-#define LFS_ERROR(fmt, ...) LFS_ERROR_(fmt, ##__VA_ARGS__, "")
+    printf("%s:%d:error: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define LFS_ERROR(fmt, ...) LFS_ERROR_(fmt, ##__VA_ARGS__)
 #else
 #define LFS_ERROR(...)
 #endif
