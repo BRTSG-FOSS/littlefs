@@ -151,6 +151,10 @@ enum lfs_open_flags {
     LFS_F_FLAT    = 0x400000, // A flat fixed length file
 };
 
+enum lfs_mount_flags {
+    LFS_M_GROW      = 0x01, // Grows the filesystem to the configured size
+};
+
 enum lfs_reserve_flags {
     LFS_R_ERRED     = 0x01, // Flags an error to abort the reservation
     LFS_R_GOBBLE    = 0x02, // Force gobble allocation
@@ -277,6 +281,9 @@ struct lfs_config {
     // can help bound the metadata compaction time. Must be <= block_size.
     // Defaults to block_size when zero.
     lfs_size_t metadata_max;
+
+    // Mount flags, see lfs_mount_flags.
+    int flags;
 };
 
 // File info structure
