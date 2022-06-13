@@ -166,13 +166,16 @@ int main(void)
     lfs_unmount(&lfs);
     
     err = lfs_mount(&lfs, &cfg);
+    assert(lfs.version == LFS_DISK_VERSION_BASE);
     writedummyfile("0", 0xBA);
     writedummyfile("1", 0xC9);
     writedummyfile("2", 0xDE);
     lfs_unmount(&lfs);
 
     err = lfs_mount(&lfs, &cfg);
+    assert(lfs.version == LFS_DISK_VERSION_BASE);
     tryreserve("xyz", 4097);
+    assert(lfs.version == LFS_DISK_VERSION_FLAT);
     tryreserve("abc", 4096);
     lfs_block_t res0 = tryreserve("def", 4095);
     lfs_ssize_t size0 = lfs_fs_size(&lfs);
@@ -191,6 +194,7 @@ int main(void)
     printf("\n\n===> total file size %i %i %i %i at %i %i %i %i\n\n\n", size0, size1, size2, size3, res0, res1, res2, res3);
 
     err = lfs_mount(&lfs, &cfg);
+    assert(lfs.version == LFS_DISK_VERSION_FLAT);
     lfs_block_t resn = tryopenexisting("def");
     printf("\n\n===> addr %i\n\n\n", resn);
     lfs_unmount(&lfs);
