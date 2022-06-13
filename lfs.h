@@ -160,6 +160,10 @@ enum lfs_reserve_flags {
     LFS_R_COPY      = 0x20, // Copy previous data to new reservation
 };
 
+enum lfs_mount_flags {
+    LFS_M_GROW      = 0x01, // Grows the filesystem to the configured size
+};
+
 // File seek flags
 enum lfs_whence_flags {
     LFS_SEEK_SET = 0,   // Seek relative to an absolute position
@@ -277,6 +281,9 @@ struct lfs_config {
     // can help bound the metadata compaction time. Must be <= block_size.
     // Defaults to block_size when zero.
     lfs_size_t metadata_max;
+
+    // Mount flags, see lfs_mount_flags.
+    int flags;
 };
 
 // File info structure
