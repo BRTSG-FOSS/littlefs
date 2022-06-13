@@ -35,6 +35,7 @@ extern "C"
 #define LFS_DISK_VERSION_MINOR (0xffff & (LFS_DISK_VERSION >>  0))
 
 // Minimum disk version for specific features
+#define LFS_DISK_VERSION_BASE 0x00020000
 #define LFS_DISK_VERSION_FLAT 0x00020001
 
 /// Definitions ///
