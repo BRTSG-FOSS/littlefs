@@ -14,6 +14,19 @@
 #pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
 #endif
 
+#ifdef WIN32
+#ifndef LFS_API
+#if defined(LFS_EXPORT)
+#define LFS_API __declspec(dllexport)
+#elif defined(LFS_IMPORT)
+#define LFS_API __declspec(dllimport)
+#endif
+#endif
+#endif
+#ifndef LFS_API
+#define LFS_API
+#endif
+
 // Users can override lfs_util.h with their own configuration by defining
 // LFS_CONFIG as a header file to include (-DLFS_CONFIG=lfs_config.h).
 //

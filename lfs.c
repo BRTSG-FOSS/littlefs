@@ -11,6 +11,9 @@
 #ifdef _MSC_VER
 #pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
 #pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#pragma warning (disable : 4244) // conversion from 'uint16_t' to 'uint8_t', possible loss of data
+#pragma warning (disable : 4804) // '-': unsafe use of type 'bool' in operation
+#pragma warning (disable : 4267) // '=': conversion from 'size_t' to 'lfs_size_t', possible loss of data
 #endif
 
 // some constants used throughout the code
