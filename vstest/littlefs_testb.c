@@ -1,5 +1,5 @@
 
-#if 0
+#if 1
 
 #include "lfs.h"
 
@@ -53,7 +53,7 @@ int user_provided_block_device_sync(const struct lfs_config *c)
 }
 
 // configuration of the filesystem is provided by this struct
-const struct lfs_config cfg = {
+struct lfs_config cfg = {
     // block device operations
     .read  = user_provided_block_device_read,
     .prog  = user_provided_block_device_prog,
@@ -198,6 +198,24 @@ int main(void)
     lfs_block_t resn = tryopenexisting("def");
     printf("\n\n===> addr %i\n\n\n", resn);
     lfs_unmount(&lfs);
+
+    cfg.block_count += 1;
+    err = lfs_mount(&lfs, &cfg);
+    assert(err);
+
+    cfg.flags |= LFS_M_GROW;
+    err = lfs_mount(&lfs, &cfg);
+    assert(err == LFS_ERR_OK);
+    lfs_unmount(&lfs);
+
+    cfg.flags = 0;
+    cfg.block_count -= 1;
+    err = lfs_mount(&lfs, &cfg);
+    assert(err);
+
+    cfg.flags |= LFS_M_GROW;
+    err = lfs_mount(&lfs, &cfg);
+    assert(err);
 }
 
 #else
