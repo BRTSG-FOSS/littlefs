@@ -1,5 +1,5 @@
 
-#if 1
+#if 0
 
 #include "lfs.h"
 
@@ -431,6 +431,7 @@ int main()
 
         lfs_format(&lfs, &cfg);
         lfs_mount(&lfs, &cfg);
+        assert(lfs.version == LFS_DISK_VERSION_BASE);
 
         lfs_ssize_t szhalf = (cfg.block_count - 8) / 2;
         assert(szhalf > 0);
@@ -440,6 +441,7 @@ int main()
         // big half file can definitely be allocated now
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
         err = lfs_file_reserve(&lfs, &files[0], cfg.block_size * szhalf, 0);
+        assert(lfs.version == LFS_DISK_VERSION_FLAT);
         assert(err == LFS_ERR_OK);
         lfs_file_close(&lfs, &files[0]);
 
@@ -448,6 +450,10 @@ int main()
         err = lfs_file_reserve(&lfs, &files[1], cfg.block_size * szeighth, 0);
         assert(err == LFS_ERR_OK);
         lfs_file_close(&lfs, &files[1]);
+
+        lfs_unmount(&lfs);
+        lfs_mount(&lfs, &cfg);
+        assert(lfs.version == LFS_DISK_VERSION_FLAT);
 
         // free one half
         lfs_file_open(&lfs, &files[0], names[0], LFS_O_WRONLY | LFS_O_CREAT);
