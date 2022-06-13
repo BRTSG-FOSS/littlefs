@@ -11,6 +11,12 @@
 #include "lfs.h"
 #include "lfs_util.h"
 
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -71,6 +77,10 @@ int lfs_rambd_sync(const struct lfs_config *cfg);
 
 #ifdef __cplusplus
 } /* extern "C" */
+#endif
+
+#ifdef _MSC_VER
+#pragma warning (pop)
 #endif
 
 #endif

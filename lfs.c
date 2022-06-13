@@ -8,6 +8,13 @@
 #include "lfs.h"
 #include "lfs_util.h"
 
+#ifdef _MSC_VER
+#pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#pragma warning (disable : 4244) // conversion from 'uint16_t' to 'uint8_t', possible loss of data
+#pragma warning (disable : 4804) // '-': unsafe use of type 'bool' in operation
+#pragma warning (disable : 4267) // '=': conversion from 'size_t' to 'lfs_size_t', possible loss of data
+#endif
 
 // some constants used throughout the code
 #define LFS_BLOCK_NULL ((lfs_block_t)-1)
@@ -979,7 +986,7 @@ static int lfs_dir_traverse(lfs_t *lfs,
     // iterate over directory and attrs
     lfs_tag_t tag;
     const void *buffer;
-    struct lfs_diskoff disk = {0};
+    struct lfs_diskoff disk;
     while (true) {
         {
             if (off+lfs_tag_dsize(ptag) < dir->off) {
@@ -5815,7 +5822,7 @@ static int lfs_rawmigrate(lfs_t *lfs, const struct lfs_config *cfg) {
         dir2.split = true;
 
         lfs_superblock_t superblock = {
-            .version     = LFS_DISK_VERSION,
+            .version     = LFS_DISK_VERSION_BASE,
             .block_size  = lfs->cfg->block_size,
             .block_count = lfs->cfg->block_count,
             .name_max    = lfs->name_max,

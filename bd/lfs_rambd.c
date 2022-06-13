@@ -7,6 +7,11 @@
  */
 #include "bd/lfs_rambd.h"
 
+#ifdef _MSC_VER
+#pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#endif
+
 int lfs_rambd_createcfg(const struct lfs_config *cfg,
         const struct lfs_rambd_config *bdcfg) {
     LFS_RAMBD_TRACE("lfs_rambd_createcfg(%p {.context=%p, "
