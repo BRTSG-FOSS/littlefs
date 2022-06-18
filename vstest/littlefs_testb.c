@@ -16,7 +16,7 @@ int user_provided_block_device_read(const struct lfs_config *c, lfs_block_t bloc
 {
     uint8_t *mem8 = (uint8_t *)mem;
     uint8_t *src = &mem8[block * 4096 + off];
-    printf("read block %i off %i size %i data 0x%x (%i)\n", block, off, size, *(uint32_t *)src, *(uint32_t *)src);
+    //printf("read block %i off %i size %i data 0x%x (%i)\n", block, off, size, *(uint32_t *)src, *(uint32_t *)src);
     memcpy(buffer, src, size);
     return 0;
 }
@@ -27,7 +27,7 @@ int user_provided_block_device_read(const struct lfs_config *c, lfs_block_t bloc
 int user_provided_block_device_prog(const struct lfs_config *c, lfs_block_t block,
     lfs_off_t off, const void *buffer, lfs_size_t size)
 {
-    printf("p--> block %i off %i size %i data 0x%x (%i)\n", block, off, size, *(uint32_t *)buffer, *(uint32_t *)buffer);
+    //printf("p--> block %i off %i size %i data 0x%x (%i)\n", block, off, size, *(uint32_t *)buffer, *(uint32_t *)buffer);
     uint8_t *mem8 = (uint8_t *)mem;
     uint8_t *dst = &mem8[block * 4096 + off];
     memcpy(dst, buffer, size);
@@ -40,7 +40,10 @@ int user_provided_block_device_prog(const struct lfs_config *c, lfs_block_t bloc
 // May return LFS_ERR_CORRUPT if the block should be considered bad.
 int user_provided_block_device_erase(const struct lfs_config *c, lfs_block_t block)
 {
-    printf("ERASE ERASE ERASE block %i\n", block);
+    //printf("ERASE ERASE ERASE block %i\n", block);
+    uint8_t *mem8 = (uint8_t *)mem;
+    uint8_t *dst = &mem8[block * 4096];
+    memset(dst, 0xFF, 4096);
     return 0;
 }
 
@@ -48,7 +51,7 @@ int user_provided_block_device_erase(const struct lfs_config *c, lfs_block_t blo
 // are propagated to the user.
 int user_provided_block_device_sync(const struct lfs_config *c)
 {
-    printf("==================================== sync ====================================\n");
+   //printf("==================================== sync ====================================\n");
     return 0;
 }
 
@@ -130,15 +133,15 @@ void writedummyfile(char *filename, uint8_t val)
     lfs_file_close(&lfs, &file);
 }
 
-lfs_block_t tryreserve(char *filename, uint32_t size)
+lfs_block_t tryreserve(char *filename, uint32_t size, int flags)
 {
     printf("open reserve file\n");
     lfs_file_open(&lfs, &file, filename, LFS_O_WRONLY | LFS_O_CREAT);
     printf("reserve bytes\n");
-    lfs_file_reserve(&lfs, &file, size, 0);
+    lfs_file_reserve(&lfs, &file, size, flags);
     lfs_block_t res;
     lfs_file_reserved(&lfs, &file, &res);
-    printf("close reserve file\n");
+    printf("close reserve file %i\n", (int)res);
     lfs_file_close(&lfs, &file);
     return res;
 }
@@ -174,19 +177,19 @@ int main(void)
 
     err = lfs_mount(&lfs, &cfg);
     assert(lfs.version == LFS_DISK_VERSION_BASE);
-    tryreserve("xyz", 4097);
+    tryreserve("xyz", 4097, 0);
     assert(lfs.version == LFS_DISK_VERSION_FLAT);
-    tryreserve("abc", 4096);
-    lfs_block_t res0 = tryreserve("def", 4095);
+    tryreserve("abc", 4096, 0);
+    lfs_block_t res0 = tryreserve("def", 4095, 0);
     lfs_ssize_t size0 = lfs_fs_size(&lfs);
     printf("\n\n===> total file size %i\n\n\n", size0);
-    lfs_block_t res1 = tryreserve("def", 17 * 1024 * 1024);
+    lfs_block_t res1 = tryreserve("def", 17 * 1024 * 1024, 0);
     lfs_ssize_t size1 = lfs_fs_size(&lfs);
     printf("\n\n===> total file size %i\n\n\n", size1);
-    lfs_block_t res2 = tryreserve("def", 2 * 1024 * 1024); // replaces that last file!
+    lfs_block_t res2 = tryreserve("def", 2 * 1024 * 1024, 0); // replaces that last file!
     lfs_ssize_t size2 = lfs_fs_size(&lfs);
     printf("\n\n===> total file size %i\n\n\n", size2);
-    lfs_block_t res3 = tryreserve("new", 16 * 1024 * 1024);
+    lfs_block_t res3 = tryreserve("new", 16 * 1024 * 1024, 0);
     lfs_ssize_t size3 = lfs_fs_size(&lfs);
     printf("\n\n===> total file size %i\n\n\n", size3);
     lfs_unmount(&lfs);
@@ -216,6 +219,15 @@ int main(void)
     cfg.flags |= LFS_M_GROW;
     err = lfs_mount(&lfs, &cfg);
     assert(err);
+
+    lfs = (lfs_t){ 0 };
+    file = (lfs_file_t){ 0 };
+    lfs_format(&lfs, &cfg);
+    lfs_mount(&lfs, &cfg);
+    lfs_block_t a = tryreserve("Mochi_4x4.astc", 76800, LFS_R_FRONT);
+    lfs_block_t b = tryreserve("Mochi_5x4.astc", 61440, LFS_R_FRONT);
+    assert(a != b);
+    lfs_unmount(&lfs);
 }
 
 #else
