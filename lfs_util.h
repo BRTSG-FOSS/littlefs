@@ -27,6 +27,18 @@
 #define LFS_API
 #endif
 
+#ifndef _DEBUG
+#ifndef LFS_NO_DEBUG
+#define LFS_NO_DEBUG
+#endif
+#ifndef LFS_NO_WARN
+#define LFS_NO_WARN
+#endif
+#ifndef LFS_NO_ERROR
+#define LFS_NO_ERROR
+#endif
+#endif
+
 // Users can override lfs_util.h with their own configuration by defining
 // LFS_CONFIG as a header file to include (-DLFS_CONFIG=lfs_config.h).
 //
