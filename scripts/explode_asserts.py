@@ -135,6 +135,9 @@ TYPE = {
 }
 
 def mkdecls(outf, maxwidth=16):
+    outf.write("#ifdef _MSC_VER\n")
+    outf.write("#define _CRT_SECURE_NO_WARNINGS\n")
+    outf.write("#endif\n")
     outf.write("#include <stdio.h>\n")
     outf.write("#include <stdbool.h>\n")
     outf.write("#include <stdint.h>\n")
