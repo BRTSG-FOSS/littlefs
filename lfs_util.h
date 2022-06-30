@@ -12,6 +12,7 @@
 #pragma warning (push)
 #pragma warning (disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
 #pragma warning (disable : 4996) // 'strcpy': This function or variable may be unsafe
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #ifdef WIN32

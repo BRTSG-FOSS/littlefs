@@ -8,6 +8,10 @@
 #ifndef LFS_H
 #define LFS_H
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "lfs_util.h"
