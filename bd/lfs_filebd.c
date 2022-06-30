@@ -8,7 +8,13 @@
 #include "bd/lfs_filebd.h"
 
 #include <fcntl.h>
+#ifdef _WIN32
+typedef ptrdiff_t ssize_t;
+#include <sys/types.h>
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #ifdef _WIN32
@@ -204,7 +210,7 @@ int lfs_filebd_sync(const struct lfs_config *cfg) {
     // file sync
     lfs_filebd_t *bd = cfg->context;
     #ifdef _WIN32
-    int err = FlushFileBuffers((HANDLE) _get_osfhandle(fd)) ? 0 : -1;
+    int err = FlushFileBuffers((HANDLE) _get_osfhandle(bd->fd)) ? 0 : -1;
     #else
     int err = fsync(bd->fd);
     #endif
