@@ -15,6 +15,14 @@
 #include <windows.h>
 #endif
 
+#ifdef _MSC_VER
+#define open _open
+#define close _close
+#define lseek _lseek
+#define read _read
+#define write _write
+#endif
+
 int lfs_filebd_createcfg(const struct lfs_config *cfg, const char *path,
         const struct lfs_filebd_config *bdcfg) {
     LFS_FILEBD_TRACE("lfs_filebd_createcfg(%p {.context=%p, "
